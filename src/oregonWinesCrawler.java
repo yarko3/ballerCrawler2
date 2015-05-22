@@ -1,9 +1,10 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
@@ -11,7 +12,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.io.IOUtils;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.DomSerializer;
 import org.htmlcleaner.HtmlCleaner;
@@ -76,38 +76,12 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		String temp;
 		
 		//get winery name
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/h1", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			
-			//if no name, then no page, then we return
-			if (temp == null || temp.equals(""))
-				return;
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+		line+= getName(xpath, doc);
 		line += "\t";
 		
 		
 		//get winery address
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[1]", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+		line += getAddress(xpath, doc);
 		line += "\t";
 		
 		
@@ -120,15 +94,24 @@ String filename = "crawlResults/oregonWinesResults.txt";
 			
 			temp = "http://www.oregonwines.com/" + temp;
 			
-
-			line += getDirectUrl(temp);
 			
-
+			temp = temp.replaceAll("amp;", "");
 			
+			URLConnection con = new URL( temp ).openConnection();
+			
+			con.connect();
+			InputStream is = con.getInputStream();
+			line += con.getURL();
+			
+			is.close();
+
 		} catch (XPathExpressionException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		} 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		line += "\t";
 		
@@ -148,8 +131,34 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		
 		line += "\t";
 		
-		//get winery accommodations
+		String header;
+		
+		//get first element of page
 		try {
+			
+			header = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/h2[2]", doc, XPathConstants.STRING);
+			
+			header = header.trim();
+			
+			//check what this info is
+			switch (header)
+			{
+			case ("Accomodations"):
+				break;
+			case ("Winery Information"):
+				line += "\t";
+				break;
+			case ("Wine Varietals"):
+				line += "\t\t";
+				break;
+			case ("American Viticultural Areas"):
+				line += "\t\t\t";
+				break;
+			default:
+					
+			
+			}
+			
 			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[1]/li", 
 			                       doc, XPathConstants.STRING);
 			
@@ -166,7 +175,7 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		
 		//get winery information
 		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[4]", 
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[3]", 
 			                       doc, XPathConstants.STRING);
 			
 			temp = temp.trim();
@@ -222,27 +231,85 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		}
 	}
 	
-	protected String getDirectUrl(String link) {
-	    String resultUrl = link;
-	    HttpURLConnection connection = null;
-	    try {
-	        connection = (HttpURLConnection) new URL(link).openConnection();
-	        connection.setInstanceFollowRedirects(false);
-	        connection.connect();
-	        int responseCode = connection.getResponseCode();
-	        if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-	            String locationUrl = connection.getHeaderField("Location");
-
-	            if (locationUrl != null && locationUrl.trim().length() > 0) {
-	                IOUtils.close(connection);
-	                resultUrl = getDirectUrl(locationUrl);
-	            }
-	        }
-	    } catch (Exception e) {
-	    } finally {
-	        IOUtils.close(connection);
-	    }
-	    return resultUrl;
+	/**
+	 * get the name of the winery
+	 * @param xpath
+	 * @param doc
+	 * @return winery name
+	 */
+	private String getName(XPath xpath, org.w3c.dom.Document doc)
+	{
+		String temp = null;
+		try {
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/h1", 
+			                       doc, XPathConstants.STRING);
+			
+			temp = temp.trim();
+				
+		} catch (XPathExpressionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return temp;
 	}
+	
+	/**
+	 * get winery address
+	 * @param xpath
+	 * @param doc
+	 * @return address
+	 */
+	private String getAddress(XPath xpath, org.w3c.dom.Document doc)
+	{
+		String temp = null;
+		try {
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[1]", 
+                    doc, XPathConstants.STRING);
 
+			temp = temp.trim();
+			temp = temp.replaceAll("\n", ", ");
+				
+		} catch (XPathExpressionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		return temp;
+	}
+	
+	private String getUrl(XPath xpath, org.w3c.dom.Document doc)
+	{
+		String temp = null;
+		try {
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[1]", 
+                    doc, XPathConstants.STRING);
+
+			temp = temp.trim();
+			
+			temp = "http://www.oregonwines.com/" + temp;
+			
+			
+			temp = temp.replaceAll("amp;", "");
+			
+			URLConnection con = new URL( temp ).openConnection();
+			
+			con.connect();
+			InputStream is = con.getInputStream();
+			temp = con.getURL().toString();
+			
+			is.close();
+				
+		} catch (XPathExpressionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return temp;
+	}
+	
+	
 }
