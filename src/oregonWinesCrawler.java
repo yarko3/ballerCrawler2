@@ -86,138 +86,158 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		
 		
 		//get winery website
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[3]/table[1]/tbody/tr/td/p[2]/a/@href", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			
-			temp = "http://www.oregonwines.com/" + temp;
-			
-			
-			temp = temp.replaceAll("amp;", "");
-			
-			URLConnection con = new URL( temp ).openConnection();
-			
-			con.connect();
-			InputStream is = con.getInputStream();
-			line += con.getURL();
-			
-			is.close();
-
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+		line += getUrl(xpath, doc);
 		line += "\t";
 		
 		
 		//get winery phone number
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[2]/text()", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
+		line += getPhone(xpath, doc);
 		line += "\t";
 		
-		String header;
+		String header = null;
+		int ulCount = 1;
+		int innerIndex = 2;
 		
-		//get first element of page
-		try {
+		//get the rest of the information
+		forLoop:
+		for (int i = 2; i < 6; i++)
+		{
 			
-			header = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/h2[2]", doc, XPathConstants.STRING);
-			
-			header = header.trim();
-			
-			//check what this info is
-			switch (header)
-			{
-			case ("Accomodations"):
-				break;
-			case ("Winery Information"):
-				line += "\t";
-				break;
-			case ("Wine Varietals"):
-				line += "\t\t";
-				break;
-			case ("American Viticultural Areas"):
-				line += "\t\t\t";
-				break;
-			default:
-					
-			
+			try {
+				//header of this information
+				header = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/h2["+i+"]", doc, XPathConstants.STRING);
+				
+				//get index of this information
+				int index = -1;
+				switch (header)
+				{
+				case ("Accommodations"):
+					index = 2;
+					break;
+				case ("Winery Information"):
+					//can't do anything about it
+					continue forLoop;
+				case ("Wine Varietals"):
+					index = 4;
+					break;
+				case ("American Viticultural Areas"):
+					index = 5;
+					break;
+				default:
+					//System.out.println("Header of data is not what we expected: " + header);
+					break forLoop;
+				}
+				
+				//add tabs for missing info
+				while (innerIndex != index)
+				{
+					innerIndex++;
+					line += "\t";
+				}
+				
+				//get data
+				temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul["+ulCount+"]", 
+	                       doc, XPathConstants.STRING);
+	
+				temp = temp.trim();
+				temp = temp.replaceAll("\n", "; ");
+				ulCount++;
+	
+				line+= temp;
+				
+				
+			} catch (XPathExpressionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[1]/li", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			temp = temp.replaceAll("\n", "; ");
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
 		}
 		
-		line += "\t";
 		
-		//get winery information
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[3]", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			temp = temp.replaceAll("\n", "; ");
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		line += "\t";
-		
-		//get wine varietals
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[2]", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			temp = temp.replaceAll("\n", "; ");
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		
-		line += "\t";
-		
-		//get areas
-		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[3]", 
-			                       doc, XPathConstants.STRING);
-			
-			temp = temp.trim();
-			temp = temp.replaceAll("\n", "; ");
-			
-			line+= temp;
-		} catch (XPathExpressionException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		//get first element of page
+//		try {
+//			
+//			
+//			header = header.trim();
+//			
+//			//check what this info is
+//			switch (header)
+//			{
+//			case ("Accomodations"):
+//				break;
+//			case ("Winery Information"):
+//				line += "\t";
+//				break;
+//			case ("Wine Varietals"):
+//				line += "\t\t";
+//				break;
+//			case ("American Viticultural Areas"):
+//				line += "\t\t\t";
+//				break;
+//			default:
+//					
+//			
+//			}
+//			
+//			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[1]/li", 
+//			                       doc, XPathConstants.STRING);
+//			
+//			temp = temp.trim();
+//			temp = temp.replaceAll("\n", "; ");
+//			
+//			line+= temp;
+//		} catch (XPathExpressionException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		line += "\t";
+//		
+//		//get winery information
+//		try {
+//			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[3]", 
+//			                       doc, XPathConstants.STRING);
+//			
+//			temp = temp.trim();
+//			temp = temp.replaceAll("\n", "; ");
+//			
+//			line+= temp;
+//		} catch (XPathExpressionException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		line += "\t";
+//		
+//		//get wine varietals
+//		try {
+//			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[2]", 
+//			                       doc, XPathConstants.STRING);
+//			
+//			temp = temp.trim();
+//			temp = temp.replaceAll("\n", "; ");
+//			
+//			line+= temp;
+//		} catch (XPathExpressionException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+//		
+//		line += "\t";
+//		
+//		//get areas
+//		try {
+//			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul[3]", 
+//			                       doc, XPathConstants.STRING);
+//			
+//			temp = temp.trim();
+//			temp = temp.replaceAll("\n", "; ");
+//			
+//			line+= temp;
+//		} catch (XPathExpressionException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		
 
 	
@@ -278,11 +298,17 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		return temp;
 	}
 	
+	/**
+	 * get url
+	 * @param xpath
+	 * @param doc
+	 * @return url
+	 */
 	private String getUrl(XPath xpath, org.w3c.dom.Document doc)
 	{
 		String temp = null;
 		try {
-			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[1]", 
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[3]/table[1]/tbody/tr/td/p[2]/a/@href", 
                     doc, XPathConstants.STRING);
 
 			temp = temp.trim();
@@ -307,6 +333,29 @@ String filename = "crawlResults/oregonWinesResults.txt";
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return temp;
+	}
+	
+	/**
+	 * get phone number
+	 * @param xpath
+	 * @param doc
+	 * @return phone number/s
+	 */
+	private String getPhone(XPath xpath, org.w3c.dom.Document doc)
+	{
+		String temp = null;
+		try {
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/p[2]/text()", 
+                    doc, XPathConstants.STRING);
+
+			temp = temp.trim();
+				
+		} catch (XPathExpressionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} 
 		
 		return temp;
 	}
