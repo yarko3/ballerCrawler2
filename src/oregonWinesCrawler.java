@@ -100,7 +100,7 @@ String filename = "crawlResults/oregonWinesResults.txt";
 		
 		//get the rest of the information
 		forLoop:
-		for (int i = 2; i < 6; i++)
+		for (int i = 2; i < 7; i++)
 		{
 			
 			try {
@@ -125,6 +125,7 @@ String filename = "crawlResults/oregonWinesResults.txt";
 					break;
 				case ("Sustainability Initiatives"):
 					index = 6;
+					break;
 				default:
 					//System.out.println("Header of data is not what we expected: " + header);
 					break forLoop;
