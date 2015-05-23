@@ -32,7 +32,7 @@ public class oregonWinesController {
         //add starting seeds
         String baseURL = "http://www.oregonwines.com/winerydetail.php?WineryID=";
         
-        for (int i = 2; i < 438; i++)
+        for (int i = 2; i < 100; i++)
         {
         	controller.addSeed((baseURL + i));
         }

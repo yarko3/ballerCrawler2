@@ -123,6 +123,8 @@ String filename = "crawlResults/oregonWinesResults.txt";
 				case ("American Viticultural Areas"):
 					index = 5;
 					break;
+				case ("Sustainability Initiatives"):
+					index = 6;
 				default:
 					//System.out.println("Header of data is not what we expected: " + header);
 					break forLoop;
@@ -135,15 +137,24 @@ String filename = "crawlResults/oregonWinesResults.txt";
 					line += "\t";
 				}
 				
-				//get data
-				temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul["+ulCount+"]", 
-	                       doc, XPathConstants.STRING);
-	
-				temp = temp.trim();
-				temp = temp.replaceAll("\n", "; ");
-				ulCount++;
-	
-				line+= temp;
+				//is this sustainability stuff?
+				if (index == 6)
+				{
+					line += getSustainability(xpath, doc);
+				}
+				//not the sustainability stuff
+				else
+				{
+					//get data
+					temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/ul["+ulCount+"]", 
+		                       doc, XPathConstants.STRING);
+		
+					temp = temp.trim();
+					temp = temp.replaceAll("\n", "; ");
+					ulCount++;
+		
+					line+= temp;
+				}
 				
 				
 			} catch (XPathExpressionException e) {
@@ -351,6 +362,31 @@ String filename = "crawlResults/oregonWinesResults.txt";
                     doc, XPathConstants.STRING);
 
 			temp = temp.trim();
+				
+		} catch (XPathExpressionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} 
+		
+		return temp;
+	}
+	
+	/**
+	 * get sustainability initiatives
+	 * @param xpath
+	 * @param doc
+	 * @return sustainability initiatives
+	 */
+	private String getSustainability(XPath xpath, org.w3c.dom.Document doc)
+	{
+		String temp = null;
+		try {
+			temp = (String) xpath.evaluate("/html/body/table/tbody/tr[2]/td[2]/table/tbody/tr/td/table/tbody/tr/td[1]/table/tbody/tr/td[1]/table/tbody", 
+                    doc, XPathConstants.STRING);
+
+			temp = temp.trim();
+			temp = temp.replaceAll("\n", "; ");
+			
 				
 		} catch (XPathExpressionException e1) {
 			// TODO Auto-generated catch block
